@@ -2,10 +2,19 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sort"
+	"strconv"
+	"strings"
 )
 
-const Letters = "AKQJT98765432"
+type Hand struct {
+	cards string
+	bid   int
+	label int
+}
+
+type HandList []Hand
 
 const FIVE_OF_A_KIND = 6
 const FOUR_OF_A_KIND = 5
@@ -15,23 +24,18 @@ const TWO_PAIR = 2
 const ONE_PAIR = 1
 const HIGH_CARD = 0
 
-// sort
-func (hands HandList) Len() int               { return len(hands) }
-func (hands HandList) Swap(i int, j int)      { hands[i], hands[j] = hands[j], hands[i] }
-func (hands HandList) Less(i int, j int) bool { return compareHands(&hands[i], &hands[j]) < 0 }
-
-//
+var Letters = "AKQJT987654321"
 
 func main() {
-	do1()
+	do()
 }
 
-func do1() {
-	hands := ParseInput()
+func do() {
+	hands := parseInput()
 	for i := range hands {
 		labelHand(&hands[i])
 	}
-	sort.Sort(hands)
+	sortHands(hands)
 
 	// calculate winnings
 	sum := 0
@@ -41,6 +45,12 @@ func do1() {
 	}
 
 	fmt.Println(sum)
+}
+
+func sortHands(hands HandList) {
+	sort.SliceStable(hands, func(i int, j int) bool {
+		return compareHands(&hands[i], &hands[j]) < 0
+	})
 }
 
 func compareHands(hand1 *Hand, hand2 *Hand) int {
@@ -111,4 +121,26 @@ func labelHand(hand *Hand) {
 			(*hand).label = TWO_PAIR
 		}
 	}
+}
+
+func parseInput() HandList {
+	hands := HandList{}
+
+	content, _ := ioutil.ReadFile("input.txt")
+	lines := strings.Split(string(content), "\n")
+
+	for _, line := range lines {
+		split1 := strings.Split(line, " ")
+		cards := split1[0]
+		bid, _ := strconv.Atoi(split1[1])
+
+		hand := Hand{
+			cards: cards,
+			bid:   bid,
+		}
+
+		hands = append(hands, hand)
+	}
+
+	return hands
 }
